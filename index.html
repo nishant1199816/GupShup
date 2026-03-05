@@ -311,36 +311,36 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 <!-- LOADER -->
 <div id="loader">
   <div class="spin"></div>
-  <p>DostChat load ho raha hai...</p>
+  <p>Loading DostChat...</p>
 </div>
 
 <!-- LOGIN PAGE -->
 <div id="loginPage" style="display:none;">
   <div class="login-card">
     <div class="login-logo">💬 DostChat</div>
-    <div class="login-sub">Apne dostों ke saath private baatein karo 🔒</div>
+    <div class="login-sub">Chat privately with your friends 🔒</div>
     <div class="login-tabs">
       <button class="login-tab active" onclick="switchTab('login')">Login</button>
       <button class="login-tab" onclick="switchTab('signup')">Sign Up</button>
     </div>
     <div id="loginForm">
       <div class="field"><label>Username</label>
-        <input type="text" id="loginUser" placeholder="apna username daalo"></div>
+        <input type="text" id="loginUser" placeholder="enter your username"></div>
       <div class="field"><label>Password</label>
-        <input type="password" id="loginPass" placeholder="password daalo" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <input type="password" id="loginPass" placeholder="enter your password" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn-main" onclick="doLogin()">Login Karo 🚀</button>
     </div>
     <div id="signupForm" style="display:none;">
       <div class="field"><label>Display Name</label>
-        <input type="text" id="signupName" placeholder="tumhara naam (dosto ko dikhega)"></div>
+        <input type="text" id="signupName" placeholder="your display name"></div>
       <div class="field"><label>Username</label>
-        <input type="text" id="signupUser" placeholder="unique username (login ke liye)"></div>
+        <input type="text" id="signupUser" placeholder="choose a unique username"></div>
       <div class="field"><label>Password</label>
         <input type="password" id="signupPass" placeholder="strong password" onkeydown="if(event.key==='Enter')doSignup()"></div>
-      <button class="btn-main" onclick="doSignup()">Account Banao ✨</button>
+      <button class="btn-main" onclick="doSignup()">Create Account ✨</button>
     </div>
     <div class="error-msg" id="authError"></div>
-    <div class="login-note">⚡ Koi email/OTP verification nahi — seedha login!</div>
+    <div class="login-note">⚡ No email/OTP needed — just username & password!</div>
   </div>
 </div>
 
@@ -352,13 +352,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       <div class="sidebar-top">
         <div class="my-avatar" id="myAvatar" onclick="logout()" title="Logout">?</div>
         <span class="sidebar-title">DostChat</span>
-        <button class="icon-btn" onclick="openGroupModal()" title="Naya Group">👥</button>
+        <button class="icon-btn" onclick="openGroupModal()" title="New Group">👥</button>
       </div>
       <div class="search-wrap">
-        <input type="text" id="searchInput" placeholder="🔍 Dost ya group dhundo..." oninput="filterRooms(this.value)">
+        <input type="text" id="searchInput" placeholder="🔍 Search chats..." oninput="filterRooms(this.value)">
       </div>
       <div class="sidebar-tabs">
-        <button class="stab active" onclick="setTab(this,'all')">Sab</button>
+        <button class="stab active" onclick="setTab(this,'all')">All</button>
         <button class="stab" onclick="setTab(this,'dm')">Personal</button>
         <button class="stab" onclick="setTab(this,'group')">Groups</button>
       </div>
@@ -369,8 +369,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     <div class="chat-main">
       <div class="empty-state" id="emptyState">
         <div class="big">💬</div>
-        <p>Koi dost select karo</p>
-        <p style="font-size:12px; margin-top:4px;">Sab messages encrypted hain 🔐</p>
+        <p>Select a friend to start chatting</p>
+        <p style="font-size:12px; margin-top:4px;">All messages are private 🔐</p>
       </div>
 
       <div class="chat-view" id="chatView">
@@ -404,9 +404,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
                 <div class="att-opt"><label>📄 Document<input type="file" onchange="handleFile(this,'doc')"></label></div>
               </div>
             </div>
-            <textarea class="msg-box" id="msgBox" placeholder="Message likho..." rows="1"
+            <textarea class="msg-box" id="msgBox" placeholder="Type a message..." rows="1"
               oninput="onType(this)" onkeydown="handleKey(event)"></textarea>
-            <button class="tl-btn" onclick="translateMsg()" title="Hindi→English translate karo">🌐</button>
+            <button class="tl-btn" onclick="translateMsg()" title="Translate">🌐</button>
             <button class="send-btn" onclick="sendMsg()">➤</button>
           </div>
         </div>
@@ -418,14 +418,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 <!-- GROUP MODAL -->
 <div class="overlay" id="groupOverlay">
   <div class="modal">
-    <h3>👥 Naya Group Banao</h3>
-    <input type="text" id="gName" placeholder="Group ka naam...">
+    <h3>👥 Create New Group</h3>
+    <input type="text" id="gName" placeholder="Group name...">
     <div class="chips" id="gChips"></div>
     <select id="gMemberSel" onchange="addGMember(this)">
-      <option value="">+ Member add karo</option>
+      <option value="">+ Add members</option>
     </select>
     <div class="modal-btns">
-      <button class="btn-ok" onclick="createGroup()">Banao 🚀</button>
+      <button class="btn-ok" onclick="createGroup()">Create 🚀</button>
       <button class="btn-cancel" onclick="closeGroupModal()">Cancel</button>
     </div>
   </div>
@@ -509,14 +509,14 @@ function switchTab(t) {
 async function doLogin() {
   const username = document.getElementById('loginUser').value.trim().toLowerCase();
   const password = document.getElementById('loginPass').value;
-  if(!username||!password) return setErr('Sab fields bharo!');
+  if(!username||!password) return setErr('Please fill in all fields!');
   try {
     const fakeEmail = username + '@dostchat.app';
     await auth.signInWithEmailAndPassword(fakeEmail, password);
   } catch(e) {
-    if(e.code==='auth/user-not-found') setErr('Username nahi mila. Pehle sign up karo!');
-    else if(e.code==='auth/wrong-password') setErr('Galat password!');
-    else setErr('Login fail hua: '+e.message);
+    if(e.code==='auth/user-not-found') setErr('Username not found. Please sign up first!');
+    else if(e.code==='auth/wrong-password') setErr('Incorrect password!');
+    else setErr('Login failed: '+e.message);
   }
 }
 
@@ -524,12 +524,12 @@ async function doSignup() {
   const displayName = document.getElementById('signupName').value.trim();
   const username    = document.getElementById('signupUser').value.trim().toLowerCase();
   const password    = document.getElementById('signupPass').value;
-  if(!displayName||!username||!password) return setErr('Sab fields bharo!');
-  if(password.length<6) return setErr('Password kam se kam 6 characters ka hona chahiye!');
-  if(!/^[a-z0-9_]+$/.test(username)) return setErr('Username mein sirf a-z, 0-9, _ allowed hai!');
+  if(!displayName||!username||!password) return setErr('Please fill in all fields!');
+  if(password.length<6) return setErr('Password must be at least 6 characters!');
+  if(!/^[a-z0-9_]+$/.test(username)) return setErr('Username can only contain a-z, 0-9, underscore!');
   try {
     const existing = await db.collection('users').where('username','==',username).get();
-    if(!existing.empty) return setErr('Yeh username pehle se le gaya hai!');
+    if(!existing.empty) return setErr('This username is already taken!');
     const fakeEmail = username + '@dostchat.app';
     const cred = await auth.createUserWithEmailAndPassword(fakeEmail, password);
     await db.collection('users').doc(cred.user.uid).set({
@@ -537,14 +537,14 @@ async function doSignup() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch(e) {
-    setErr('Sign up fail: '+e.message);
+    setErr('Sign up failed: '+e.message);
   }
 }
 
 function setErr(msg) { document.getElementById('authError').textContent = msg; }
 
 async function logout() {
-  if(!confirm('Logout karna chahte ho?')) return;
+  if(!confirm('Are you sure you want to logout?')) return;
   await setOnlineStatus(false);
   auth.signOut();
 }
@@ -587,7 +587,7 @@ function renderRooms() {
   filtered.forEach(room => {
     const name    = getRoomName(room);
     const emoji   = room.type==='group' ? '👥' : '🧑';
-    const preview = room.lastMsg || 'Abhi koi message nahi';
+    const preview = room.lastMsg || 'No messages yet';
     const time    = room.lastMsgAt ? timeAgo(room.lastMsgAt.toDate()) : '';
     const unread  = (room.unread||{})[currentUser.uid] || 0;
     const active  = currentRoom?.id === room.id;
@@ -678,7 +678,7 @@ async function openRoom(roomId) {
       .map(([uid])=>uid);
     const el = document.getElementById('typingIndicator');
     el.classList.toggle('show', typers.length>0);
-    if(typers.length>0) el.textContent = 'Koi type kar raha hai...';
+    if(typers.length>0) el.textContent = 'Someone is typing...';
   });
 
   loadMessages(roomId);
@@ -692,7 +692,7 @@ async function openRoom(roomId) {
 function loadMessages(roomId) {
   if(msgsListener) msgsListener();
   const area = document.getElementById('msgsArea');
-  area.innerHTML = `<div class="day-sep"><span>Aaj</span></div>`;
+  area.innerHTML = `<div class="day-sep"><span>Today</span></div>`;
 
   msgsListener = db.collection('rooms').doc(roomId)
     .collection('messages')
@@ -709,7 +709,7 @@ function loadMessages(roomId) {
 function appendMessage(msg) {
   const area  = document.getElementById('msgsArea');
   const isMe  = msg.senderId === currentUser.uid;
-  const time  = msg.createdAt ? timeAgo(msg.createdAt.toDate()) : 'Abhi';
+  const time  = msg.createdAt ? timeAgo(msg.createdAt.toDate()) : 'Just now';
   const isGrp = currentRoom?.type === 'group';
 
   let content = '';
@@ -883,7 +883,7 @@ async function openGroupModal() {
   allUsers = snap.docs.map(d=>d.data()).filter(u=>u.uid!==currentUser.uid);
 
   const sel = document.getElementById('gMemberSel');
-  sel.innerHTML = '<option value="">+ Member add karo</option>';
+  sel.innerHTML = '<option value="">+ Add members</option>';
   allUsers.forEach(u => {
     sel.innerHTML += `<option value="${u.uid}">${u.displayName} (@${u.username})</option>`;
   });
@@ -906,8 +906,8 @@ function removeGMember(uid) {
 
 async function createGroup() {
   const name = document.getElementById('gName').value.trim();
-  if(!name) return alert('Group ka naam daalo!');
-  if(selectedGMembers.length<1) return alert('Kam se kam 1 member add karo!');
+  if(!name) return alert('Please enter a group name!');
+  if(selectedGMembers.length<1) return alert('Please add at least 1 member!');
 
   const members = [currentUser.uid, ...selectedGMembers];
   const docRef = await db.collection('rooms').add({
@@ -922,7 +922,7 @@ async function createGroup() {
   // welcome message
   await db.collection('rooms').doc(docRef.id).collection('messages').add({
     senderId: 'system', senderName:'DostChat', type:'text',
-    text:`"${name}" group mein welcome hai! 🎉`,
+    text:`"${name}" group — welcome everyone! 🎉`,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
   openRoom(docRef.id);
@@ -937,7 +937,7 @@ function escHtml(s) {
 }
 function timeAgo(date) {
   const diff = (Date.now()-date)/1000;
-  if(diff<60) return 'Abhi';
+  if(diff<60) return 'Just now';
   if(diff<3600) return Math.floor(diff/60)+' min';
   if(diff<86400) return date.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
   return date.toLocaleDateString('en',{day:'numeric',month:'short'});
