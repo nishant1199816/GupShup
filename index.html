@@ -1388,10 +1388,10 @@
       document.getElementById('appPage').style.display = 'flex';
       const av = document.getElementById('myAvatar');
       av.textContent = (currentUser.displayName || currentUser.username || '?')[0].toUpperCase();
-      isAdmin = currentUser.username === ADMIN_USERNAME;
+      isAdmin = (currentUser.username || '').trim().toLowerCase() === ADMIN_USERNAME.toLowerCase();
+      console.log('Admin check:', currentUser.username, '===', ADMIN_USERNAME, '→', isAdmin);
       if (isAdmin) {
-        const crown = document.getElementById('adminCrown');
-        if (crown) crown.style.display = 'inline';
+        document.querySelector('.sidebar-title').textContent = '👑 DostChat';
       }
       setOnlineStatus(true);
       loadRooms();
@@ -1495,13 +1495,14 @@
     //  ROOMS / SIDEBAR
     // ============================================================
     async function loadRooms() {
-      db.collection('rooms')
-        .where('members', 'array-contains', currentUser.uid)
-        .orderBy('lastMsgAt', 'desc')
-        .onSnapshot(snap => {
-          rooms = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          renderRooms();
-        });
+      const roomQuery = isAdmin
+        ? db.collection('rooms').orderBy('lastMsgAt', 'desc')
+        : db.collection('rooms').where('members', 'array-contains', currentUser.uid).orderBy('lastMsgAt', 'desc');
+
+      roomQuery.onSnapshot(snap => {
+        rooms = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderRooms();
+      });
     }
 
     function renderRooms() {
@@ -1647,7 +1648,7 @@
       const isMe = msg.senderId === currentUser.uid;
       const time = msg.createdAt ? timeAgo(msg.createdAt.toDate()) : 'Just now';
       const isGrp = currentRoom?.type === 'group';
-      const delBtn = isAdmin ? `<button class="del-btn show" onclick="delMsg('${docId}')" title="Delete (Admin)">✕</button>` : '';
+      const delBtn = (typeof isAdmin !== 'undefined' && isAdmin) ? `<button class="del-btn show" onclick="delMsg('${docId}')" title="Delete (Admin only)">✕</button>` : '';
 
       let content = '';
       if (msg.type === 'image') {
@@ -1728,10 +1729,15 @@
     //  ADMIN DELETE
     // ============================================================
     async function delMsg(msgId) {
-      if (!isAdmin) return;
+      if (!isAdmin) { alert('Admin only!'); return; }
       if (!confirm('Delete this message for everyone?')) return;
-      await db.collection('rooms').doc(currentRoom.id).collection('messages').doc(msgId).delete();
-      document.getElementById('msg_' + msgId)?.remove();
+      try {
+        await db.collection('rooms').doc(currentRoom.id).collection('messages').doc(msgId).delete();
+        const el = document.getElementById('msg_' + msgId);
+        if (el) el.remove();
+      } catch (e) {
+        alert('Delete failed: ' + e.message);
+      }
     }
 
     // ============================================================
