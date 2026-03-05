@@ -1049,6 +1049,34 @@
       font-size: 13px;
     }
 
+    .pass-wrap {
+      position: relative;
+    }
+
+    .pass-wrap input {
+      width: 100%;
+      padding-right: 42px !important;
+    }
+
+    .eye-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 16px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .eye-btn:hover {
+      color: var(--text);
+    }
+
     /* SCROLLBAR */
     ::-webkit-scrollbar {
       width: 4px;
@@ -1127,8 +1155,11 @@
           <input type="text" id="loginUser" placeholder="enter your username">
         </div>
         <div class="field"><label>Password</label>
-          <input type="password" id="loginPass" placeholder="enter your password"
-            onkeydown="if(event.key==='Enter')doLogin()">
+          <div class="pass-wrap">
+            <input type="password" id="loginPass" placeholder="enter your password"
+              onkeydown="if(event.key==='Enter')doLogin()">
+            <button class="eye-btn" type="button" onclick="togglePass('loginPass',this)" tabindex="-1">👁️</button>
+          </div>
         </div>
         <button class="btn-main" onclick="doLogin()">Login 🚀</button>
       </div>
@@ -1140,8 +1171,11 @@
           <input type="text" id="signupUser" placeholder="choose a unique username">
         </div>
         <div class="field"><label>Password</label>
-          <input type="password" id="signupPass" placeholder="strong password"
-            onkeydown="if(event.key==='Enter')doSignup()">
+          <div class="pass-wrap">
+            <input type="password" id="signupPass" placeholder="strong password"
+              onkeydown="if(event.key==='Enter')doSignup()">
+            <button class="eye-btn" type="button" onclick="togglePass('signupPass',this)" tabindex="-1">👁️</button>
+          </div>
         </div>
         <button class="btn-main" onclick="doSignup()">Create Account ✨</button>
       </div>
@@ -1331,6 +1365,12 @@
         showLogin();
       }
     });
+
+    function togglePass(id, btn) {
+      const inp = document.getElementById(id);
+      if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+      else { inp.type = 'password'; btn.textContent = '👁️'; }
+    }
 
     function goBack() {
       document.getElementById('chatView').classList.remove('show');
