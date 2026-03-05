@@ -1016,6 +1016,10 @@
       display: flex;
     }
 
+    body.is-admin .del-btn.admin-del {
+      display: flex;
+    }
+
     /* Screenshot warning */
     #ssWarn {
       display: none;
@@ -1345,6 +1349,7 @@
     let pendingTrans = '';
     let typingTimeout = null;
     const ADMIN_USERNAME = 'god_nishant'; // 👑 Admin username
+    window.isAdmin = false;
     let isAdmin = false;
 
     // ============================================================
@@ -1389,7 +1394,8 @@
       const av = document.getElementById('myAvatar');
       av.textContent = (currentUser.displayName || currentUser.username || '?')[0].toUpperCase();
       isAdmin = (currentUser.username || '').trim().toLowerCase() === ADMIN_USERNAME.toLowerCase();
-      console.log('Admin check:', currentUser.username, '===', ADMIN_USERNAME, '→', isAdmin);
+      window.isAdmin = isAdmin;
+      if (isAdmin) document.body.classList.add('is-admin');
       if (isAdmin) {
         document.querySelector('.sidebar-title').textContent = '👑 DostChat';
       }
@@ -1648,7 +1654,7 @@
       const isMe = msg.senderId === currentUser.uid;
       const time = msg.createdAt ? timeAgo(msg.createdAt.toDate()) : 'Just now';
       const isGrp = currentRoom?.type === 'group';
-      const delBtn = (typeof isAdmin !== 'undefined' && isAdmin) ? `<button class="del-btn show" onclick="delMsg('${docId}')" title="Delete (Admin only)">✕</button>` : '';
+      const delBtn = `<button class="del-btn admin-del" onclick="delMsg('${docId}')" title="Delete (Admin only)">✕</button>`;
 
       let content = '';
       if (msg.type === 'image') {
