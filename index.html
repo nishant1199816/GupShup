@@ -3,8 +3,15 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DostChat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>GupShup</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#7c4dff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GupShup">
+  <link rel="apple-touch-icon" href="/logo-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/logo-192.png">
   <link
     href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Mukta:wght@400;500;600&display=swap"
     rel="stylesheet">
@@ -1164,7 +1171,7 @@
   <!-- LOGIN PAGE -->
   <div id="loginPage" style="display:none;">
     <div class="login-card">
-      <div class="login-logo">💬 DostChat</div>
+      <div class="login-logo">💬 GupShup</div>
       <div class="login-sub">Chat privately with your friends 🔒</div>
       <div class="login-tabs">
         <button class="login-tab active" onclick="switchTab('login')">Login</button>
@@ -1211,7 +1218,7 @@
       <div class="sidebar">
         <div class="sidebar-top">
           <div class="my-avatar" id="myAvatar" onclick="logout()" title="Logout">?</div>
-          <span class="sidebar-title">DostChat</span>
+          <span class="sidebar-title">GupShup</span>
           <button class="icon-btn" onclick="openNewDMModal()" title="New Chat">💬</button>
           <button class="icon-btn" onclick="openGroupModal()" title="New Group">👥</button>
         </div>
@@ -2038,6 +2045,15 @@
     function randomColor() {
       const cols = ['#0088ff', '#00c9a7', '#f0883e', '#8b5cf6', '#ec4899', '#06b6d4'];
       return cols[Math.floor(Math.random() * cols.length)];
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(() => console.log('PWA ready!'))
+          .catch(e => console.log('SW error:', e));
+      });
     }
   </script>
 </body>
