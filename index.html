@@ -909,64 +909,77 @@
 
 
     /* ===== MOBILE RESPONSIVE ===== */
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
+
+      /* Sidebar takes full screen on mobile */
       .sidebar {
-        width: 100vw !important;
-        min-width: unset !important;
-        position: fixed;
+        position: fixed !important;
         left: 0;
         top: 0;
         bottom: 0;
-        z-index: 100;
+        width: 100vw !important;
+        min-width: unset !important;
+        z-index: 200;
         transform: translateX(0);
-        transition: transform .25s ease;
+        transition: transform .25s cubic-bezier(.4, 0, .2, 1);
       }
 
       .sidebar.hidden {
         transform: translateX(-100%);
       }
 
+      /* Chat takes full screen */
       .chat-main {
-        width: 100vw;
-        position: fixed;
+        position: fixed !important;
         left: 0;
         top: 0;
         right: 0;
         bottom: 0;
-        display: flex;
-        flex-direction: column;
+        width: 100vw !important;
+        display: flex !important;
+        flex-direction: column !important;
+        z-index: 100;
       }
 
       .chat-view {
-        flex: 1;
         display: none;
         flex-direction: column;
-        height: 100%;
-        overflow: hidden;
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
       }
 
       .chat-view.show {
         display: flex !important;
       }
 
+      #emptyState {
+        display: none !important;
+      }
+
       .msgs {
         flex: 1 !important;
         overflow-y: auto !important;
         min-height: 0 !important;
+        -webkit-overflow-scrolling: touch;
       }
 
       .input-area {
         flex-shrink: 0 !important;
-        padding-bottom: max(14px, env(safe-area-inset-bottom)) !important;
+        padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+        background: var(--surface) !important;
       }
 
       .chat-header {
         flex-shrink: 0 !important;
+        position: sticky;
+        top: 0;
+        z-index: 10;
       }
 
       #membersPanel {
         flex-shrink: 0 !important;
-        max-height: 120px !important;
+        max-height: 130px !important;
       }
 
       #backBtn {
@@ -974,11 +987,17 @@
       }
 
       .bubble {
-        max-width: 82% !important;
+        max-width: 85% !important;
       }
 
-      #emptyState {
-        display: none;
+      /* Room list items bigger touch targets */
+      .room-item {
+        padding: 14px 16px !important;
+      }
+
+      /* Sidebar header */
+      .sidebar-top {
+        padding: 16px !important;
       }
     }
 
@@ -995,29 +1014,26 @@
     /* Admin delete btn */
     .del-btn {
       position: absolute;
-      top: -6px;
-      right: -6px;
-      width: 20px;
-      height: 20px;
+      top: -8px;
+      right: -8px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: var(--danger);
-      border: none;
+      border: 2px solid var(--bg);
       cursor: pointer;
       color: #fff;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 12px;
+      font-weight: 900;
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 10;
+      z-index: 99;
+      line-height: 1;
     }
 
-    .del-btn.show {
-      display: flex;
-    }
-
-    body.is-admin .del-btn.admin-del {
-      display: flex;
+    body.is-admin .del-btn {
+      display: flex !important;
     }
 
     /* Screenshot warning */
@@ -1654,8 +1670,6 @@
       const isMe = msg.senderId === currentUser.uid;
       const time = msg.createdAt ? timeAgo(msg.createdAt.toDate()) : 'Just now';
       const isGrp = currentRoom?.type === 'group';
-      const delBtn = `<button class="del-btn admin-del" onclick="delMsg('${docId}')" title="Delete (Admin only)">✕</button>`;
-
       let content = '';
       if (msg.type === 'image') {
         content = `<div class="media-img"><img src="${msg.url}" alt="photo" loading="lazy"></div>`;
@@ -1667,13 +1681,14 @@
       }
 
       area.innerHTML += `
-    <div class="msg-row ${isMe ? 'me' : 'them'}">
-      <div>
+    <div class="msg-row ${isMe ? 'me' : 'them'}" id="msg_${docId}">
+      <div style="position:relative;display:inline-block;max-width:100%">
         ${!isMe && isGrp ? `<div class="msg-sender">${escHtml(msg.senderName || '')}</div>` : ''}
         <div class="bubble">
           ${content}
           <div class="msg-time">${time}${isMe ? ' ✓✓' : ''}</div>
         </div>
+        <button class="del-btn" onclick="delMsg('${docId}')" title="Delete">✕</button>
       </div>
     </div>`;
     }
