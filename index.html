@@ -352,6 +352,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       <div class="sidebar-top">
         <div class="my-avatar" id="myAvatar" onclick="logout()" title="Logout">?</div>
         <span class="sidebar-title">DostChat</span>
+        <button class="icon-btn" onclick="openNewDMModal()" title="New Chat">💬</button>
         <button class="icon-btn" onclick="openGroupModal()" title="New Group">👥</button>
       </div>
       <div class="search-wrap">
@@ -381,8 +382,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
             <div class="ch-status" id="chStatus"></div>
           </div>
           <div class="ch-actions">
-            <button class="icon-btn" title="Members">ℹ️</button>
+            <button class="icon-btn" id="membersBtn" onclick="toggleMembersPanel()" title="View Members">👥</button>
+            <button class="icon-btn" id="newDMBtn" onclick="openNewDMModal()" title="New Direct Message" style="display:none">✉️</button>
           </div>
+        </div>
+        <!-- Members Panel -->
+        <div id="membersPanel" style="display:none; background:var(--surface); border-bottom:1px solid var(--border); padding:10px 16px; max-height:160px; overflow-y:auto;">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:8px; font-weight:600; letter-spacing:.5px;">GROUP MEMBERS</div>
+          <div id="membersList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
         </div>
 
         <div class="msgs" id="msgsArea"></div>
@@ -411,6 +418,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- DM MODAL -->
+<div class="overlay" id="dmOverlay">
+  <div class="modal">
+    <h3>💬 Start New Chat</h3>
+    <div id="dmUserList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-top:4px;"></div>
+    <div class="modal-btns" style="margin-top:12px;">
+      <button class="btn-cancel" onclick="document.getElementById('dmOverlay').classList.remove('show')">Close</button>
     </div>
   </div>
 </div>
@@ -652,6 +670,9 @@ async function openRoom(roomId) {
   document.getElementById('chName').textContent = name;
   document.getElementById('chAvatar').textContent = currentRoom.type==='group'?'👥':'🧑';
   document.getElementById('chAvatar').style.background = (currentRoom.color||'#00c9a7')+'20';
+  // Show/hide header buttons based on room type
+  document.getElementById('membersBtn').style.display = currentRoom.type==='group' ? '' : 'none';
+  document.getElementById('membersPanel').style.display = 'none';
 
   if(currentRoom.type==='group') {
     document.getElementById('chStatus').textContent = `👥 ${currentRoom.members.length} members`;
@@ -788,19 +809,40 @@ function stopTyping() {
 }
 
 // ============================================================
-//  FILE UPLOAD
+//  FILE UPLOAD — Cloudinary
 // ============================================================
+const CLOUDINARY_NAME = 'dycvl0atz';
+const CLOUDINARY_PRESET = 'GupShup_preset';
+
 async function handleFile(input, type) {
   const file = input.files[0];
   if(!file || !currentRoom) return;
   document.getElementById('attachPopup').classList.remove('show');
 
-  const path = `uploads/${currentRoom.id}/${Date.now()}_${file.name}`;
-  const ref = storage.ref(path);
-  const snap = await ref.put(file);
-  const url  = await snap.ref.getDownloadURL();
+  const btn = document.querySelector('.send-btn');
+  btn.textContent = '⏳'; btn.disabled = true;
 
-  await sendMsg('', { type, url, fileName:file.name });
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_NAME}/upload`, {
+      method: 'POST', body: formData
+    });
+    const data = await res.json();
+    if(data.secure_url) {
+      await sendMsg('', { type, url: data.secure_url, fileName: file.name });
+    } else {
+      alert('Upload failed: ' + (data.error?.message || 'Unknown error'));
+    }
+  } catch(e) {
+    alert('Upload failed! Check your internet connection.');
+    console.error(e);
+  } finally {
+    btn.textContent = '➤'; btn.disabled = false;
+    input.value = '';
+  }
 }
 
 function toggleAttach() {
@@ -846,6 +888,66 @@ function sendTranslated() {
 function closeTrans() {
   document.getElementById('transBar').classList.remove('show');
   pendingTrans = '';
+}
+
+// ============================================================
+//  MEMBERS PANEL & NEW DM MODAL
+// ============================================================
+async function toggleMembersPanel() {
+  const panel = document.getElementById('membersPanel');
+  const isGroup = currentRoom?.type === 'group';
+  if(!isGroup) { panel.style.display = 'none'; return; }
+
+  if(panel.style.display === 'block') {
+    panel.style.display = 'none'; return;
+  }
+
+  // Load member details
+  const list = document.getElementById('membersList');
+  list.innerHTML = '<span style="color:var(--muted);font-size:12px">Loading...</span>';
+  panel.style.display = 'block';
+
+  const snaps = await Promise.all(currentRoom.members.map(uid => db.collection('users').doc(uid).get()));
+  list.innerHTML = '';
+  snaps.forEach(s => {
+    if(!s.exists) return;
+    const u = s.data();
+    const isMe = u.uid === currentUser.uid;
+    list.innerHTML += `
+      <div style="display:flex;align-items:center;gap:8px;background:var(--card);border-radius:10px;padding:6px 10px;cursor:${isMe?'default':'pointer'}"
+           onclick="${isMe ? '' : `startDM('${u.uid}','${u.displayName}')`}" title="${isMe ? 'You' : 'Send DM'}">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff">
+          ${(u.displayName||u.username||'?')[0].toUpperCase()}
+        </div>
+        <span style="font-size:13px;font-weight:600">${escHtml(u.displayName)}${isMe?' (you)':''}</span>
+        ${!isMe ? '<span style="font-size:10px;color:var(--accent)">💬 DM</span>' : ''}
+      </div>`;
+  });
+}
+
+// New DM modal — show all users
+let dmModalUsers = [];
+async function openNewDMModal() {
+  const snap = await db.collection('users').get();
+  dmModalUsers = snap.docs.map(d=>d.data()).filter(u=>u.uid!==currentUser.uid);
+
+  const list = document.getElementById('dmUserList');
+  list.innerHTML = '';
+  dmModalUsers.forEach(u => {
+    list.innerHTML += `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s"
+           onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background=''"
+           onclick="startDM('${u.uid}','${u.displayName}');document.getElementById('dmOverlay').classList.remove('show')">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff">
+          ${(u.displayName||u.username||'?')[0].toUpperCase()}
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px">${escHtml(u.displayName)}</div>
+          <div style="font-size:12px;color:var(--muted)">@${escHtml(u.username)}</div>
+        </div>
+      </div>`;
+  });
+  document.getElementById('dmOverlay').classList.add('show');
 }
 
 // ============================================================
