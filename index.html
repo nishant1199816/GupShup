@@ -544,10 +544,17 @@
       display: flex;
       align-items: flex-end;
       gap: 8px;
+      width: 100%;
     }
 
     .msg-row.me {
       justify-content: flex-end;
+    }
+
+    .msg-row.me>div {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
     }
 
     .msg-sender {
@@ -558,13 +565,16 @@
     }
 
     .bubble {
-      max-width: 62%;
+      max-width: 72%;
+      min-width: 60px;
       padding: 9px 14px;
       border-radius: 18px;
       font-size: 14px;
       line-height: 1.55;
       animation: bubblePop .18s ease;
       word-break: break-word;
+      white-space: pre-wrap;
+      display: inline-block;
     }
 
     @keyframes bubblePop {
@@ -580,7 +590,7 @@
     }
 
     .msg-row.me .bubble {
-      background: var(--bubble-me);
+      background: #7c4dff;
       color: #fff;
       border-bottom-right-radius: 4px;
     }
@@ -1012,6 +1022,36 @@
       display: none;
     }
 
+    /* Voice recording */
+    #voiceBtn.recording {
+      animation: pulse 1s infinite;
+      color: var(--danger) !important;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1)
+      }
+
+      50% {
+        transform: scale(1.2)
+      }
+    }
+
+    .voice-timer {
+      font-size: 12px;
+      color: var(--danger);
+      font-weight: 600;
+      display: none;
+      padding: 0 6px;
+    }
+
+    .voice-timer.show {
+      display: block;
+    }
+
     /* Screenshot prevention blur */
     body.blur-mode #msgsArea {
       filter: blur(12px);
@@ -1290,6 +1330,9 @@
               <textarea class="msg-box" id="msgBox" placeholder="Type a message..." rows="1" oninput="onType(this)"
                 onkeydown="handleKey(event)"></textarea>
               <button class="tl-btn" onclick="translateMsg()" title="Translate">🌐</button>
+              <span class="voice-timer" id="voiceTimerEl"></span>
+              <button class="icon-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice message"
+                style="font-size:20px;flex-shrink:0">🎙️</button>
               <button class="send-btn" onclick="sendMsg()">➤</button>
             </div>
           </div>
@@ -1680,6 +1723,8 @@
       let content = '';
       if (msg.type === 'image') {
         content = `<div class="media-img"><img src="${msg.url}" alt="photo" loading="lazy"></div>`;
+      } else if (msg.type === 'voice') {
+        content = `<div style='padding:4px 0'><audio controls src="${msg.url}" style='max-width:200px;height:36px;border-radius:20px;'></audio></div>`;
       } else if (msg.type === 'video' || msg.type === 'doc') {
         content = `<div class="doc-pill">${msg.type === 'video' ? '🎬' : '📄'} <a href="${msg.url}" target="_blank">${msg.fileName}</a></div>`;
       } else {
@@ -2048,6 +2093,71 @@
     }
   </script>
   <script>
+
+    // ============================================================
+    //  VOICE RECORDING
+    // ============================================================
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let voiceTimer = null;
+    let voiceSeconds = 0;
+
+    async function toggleVoice() {
+      const btn = document.getElementById('voiceBtn');
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        // Stop recording
+        mediaRecorder.stop();
+        return;
+      }
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+          btn.classList.remove('recording');
+          btn.textContent = '🎙️';
+          clearInterval(voiceTimer);
+          const timerEl = document.getElementById('voiceTimerEl');
+          if (timerEl) timerEl.classList.remove('show');
+          stream.getTracks().forEach(t => t.stop());
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          if (blob.size < 1000) return;
+          // Upload to Cloudinary
+          const CLOUDINARY_NAME = 'dycvl0atz';
+          const CLOUDINARY_PRESET = 'GupShup_preset';
+          btn.textContent = '⏳';
+          btn.disabled = true;
+          try {
+            const fd = new FormData();
+            fd.append('file', blob, 'voice.webm');
+            fd.append('upload_preset', CLOUDINARY_PRESET);
+            fd.append('resource_type', 'video');
+            const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_NAME + '/upload', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.secure_url) {
+              await sendMsg('🎙️ Voice message', { type: 'voice', url: data.secure_url });
+            }
+          } catch (e) { alert('Voice upload failed!'); }
+          btn.textContent = '🎙️';
+          btn.disabled = false;
+        };
+        mediaRecorder.start();
+        btn.classList.add('recording');
+        btn.textContent = '⏹️';
+        voiceSeconds = 0;
+        voiceTimer = setInterval(() => {
+          voiceSeconds++;
+          const timerEl = document.getElementById('voiceTimerEl');
+          if (timerEl) { timerEl.textContent = voiceSeconds + 's'; timerEl.classList.add('show'); }
+          if (voiceSeconds >= 60) { mediaRecorder.stop(); }
+        }, 1000);
+      } catch (e) {
+        alert('Microphone access denied!');
+      }
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
