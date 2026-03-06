@@ -559,14 +559,16 @@
     }
 
     .bubble {
-      max-width: 72%;
-      padding: 9px 14px;
-      border-radius: 18px;
+      max-width: 75%;
+      min-width: 80px;
+      padding: 8px 12px 6px 12px;
+      border-radius: 16px;
       font-size: 14px;
-      line-height: 1.55;
+      line-height: 1.5;
       animation: bubblePop .18s ease;
       word-break: break-word;
       width: fit-content;
+      position: relative;
     }
 
     @keyframes bubblePop {
@@ -593,22 +595,28 @@
       border-bottom-left-radius: 4px;
     }
 
+    .msg-content {
+      padding-bottom: 16px;
+    }
+
     .msg-time {
       font-size: 10px;
-      margin-top: 4px;
-      text-align: right;
-      color: rgba(255, 255, 255, .45);
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
+      color: rgba(255, 255, 255, .5);
+      white-space: nowrap;
+      line-height: 1;
     }
 
     .msg-row.them .msg-time {
       color: var(--muted);
-      text-align: left;
     }
 
     .trans-note {
-      font-size: 10px;
+      font-size: 11px;
       color: var(--accent);
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     /* media bubbles */
@@ -1720,8 +1728,12 @@
       } else if (msg.type === 'video' || msg.type === 'doc') {
         content = `<div class="doc-pill">${msg.type === 'video' ? '🎬' : '📄'} <a href="${msg.url}" target="_blank">${msg.fileName}</a></div>`;
       } else {
-        content = escHtml(msg.text || '');
-        if (msg.translated) content += `<div class="trans-note">🌐 ${escHtml(msg.translated)}</div>`;
+        const orig = escHtml(msg.text || '');
+        if (msg.translated) {
+          content = `<div class="msg-content"><div style="font-weight:600;font-size:14px;margin-bottom:3px">${escHtml(msg.translated)}</div><div style="font-size:11px;opacity:0.6;border-top:1px solid rgba(255,255,255,0.1);padding-top:3px;margin-top:2px">${orig}</div></div>`;
+        } else {
+          content = `<div class="msg-content">${orig}</div>`;
+        }
       }
 
       area.innerHTML += `
