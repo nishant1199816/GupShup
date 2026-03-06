@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>GupShup</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#7c4dff">
@@ -621,11 +621,12 @@
 
     /* media bubbles */
     .media-img {
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
       max-width: 220px;
       cursor: pointer;
       margin-bottom: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .media-img img {
@@ -1022,6 +1023,70 @@
       display: none;
     }
 
+    /* Safari/iOS fixes */
+    @supports (-webkit-touch-callout: none) {
+      .chat-main {
+        height: -webkit-fill-available;
+      }
+
+      .input-area {
+        padding-bottom: max(14px, env(safe-area-inset-bottom));
+      }
+
+      .msgs {
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .bubble {
+        -webkit-transform: translateZ(0);
+      }
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Image fullscreen viewer */
+    #imgViewer {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.95);
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+
+    #imgViewer.show {
+      display: flex;
+    }
+
+    #imgViewer img {
+      max-width: 95vw;
+      max-height: 95vh;
+      border-radius: 8px;
+      object-fit: contain;
+      user-select: none;
+    }
+
+    #imgViewer .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #fff;
+      font-size: 22px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     /* Voice recording */
     #voiceBtn.recording {
       animation: pulse 1s infinite;
@@ -1200,6 +1265,12 @@
     <div class="wi">🚫</div>
     <p>Screenshot blocked!</p>
     <small>All conversations are private</small>
+  </div>
+
+  <!-- IMAGE VIEWER -->
+  <div id="imgViewer" onclick="closeImgViewer()">
+    <button class="close-btn" onclick="closeImgViewer()">✕</button>
+    <img id="imgViewerSrc" src="" alt="">
   </div>
 
   <!-- LOADER -->
@@ -1474,21 +1545,43 @@
     //  SCREENSHOT PREVENTION
     // ============================================================
     function initScreenshotPrevention() {
+      // Blur on tab switch
       document.addEventListener('visibilitychange', () => {
         document.body.classList.toggle('blur-mode', document.hidden);
       });
+      // Desktop key prevention
       document.addEventListener('keydown', e => {
-        if (e.key === 'PrintScreen') { e.preventDefault(); showSSWarn(); }
+        if (e.key === 'PrintScreen') { e.preventDefault(); showSSWarn(); navigator.clipboard?.writeText(''); }
         if (e.ctrlKey && e.key === 'p') { e.preventDefault(); showSSWarn(); }
         if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key))) e.preventDefault();
       });
+      // Disable right click on messages
       document.addEventListener('contextmenu', e => {
         if (e.target.closest('#msgsArea')) { e.preventDefault(); return false; }
       });
+      // Disable image drag
       document.addEventListener('dragstart', e => {
         if (e.target.tagName === 'IMG') e.preventDefault();
       });
+      // iOS - disable long press save
+      document.addEventListener('touchstart', e => {
+        if (e.target.tagName === 'IMG') e.preventDefault();
+      }, { passive: false });
+      // Disable select on messages
+      const style = document.createElement('style');
+      style.textContent = '#msgsArea img { -webkit-user-select:none; user-select:none; } #msgsArea { -webkit-user-select:none; user-select:none; } .media-img img { pointer-events:auto; cursor:pointer; }';
+      document.head.appendChild(style);
     }
+    function openImgViewer(url) {
+      document.getElementById('imgViewerSrc').src = url;
+      document.getElementById('imgViewer').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeImgViewer() {
+      document.getElementById('imgViewer').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
     function showSSWarn() {
       const el = document.getElementById('ssWarn');
       el.classList.add('show');
@@ -1722,7 +1815,7 @@
       const isGrp = currentRoom?.type === 'group';
       let content = '';
       if (msg.type === 'image') {
-        content = `<div class="media-img"><img src="${msg.url}" alt="photo" loading="lazy"></div>`;
+        content = `<div class="media-img"><img src="${msg.url}" alt="photo" loading="lazy" onclick="openImgViewer('${msg.url}')"></div>`;
       } else if (msg.type === 'voice') {
         content = `<div style='padding:4px 0'><audio controls src="${msg.url}" style='max-width:200px;height:36px;border-radius:20px;'></audio></div>`;
       } else if (msg.type === 'video' || msg.type === 'doc') {
